@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 class Customer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=200)
     email = models.EmailField()
 
@@ -13,7 +13,7 @@ class Customer(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=200)
-    price = models.IntegerField()
+    price = models.DecimalField(decimal_places=2, max_digits=15, default=99.99)
     digital = models.BooleanField(default=False)
     image = models.ImageField(null=True, blank=True)
 
@@ -35,6 +35,22 @@ class Order(models.Model):
     complete = models.BooleanField(default=False)
     transaction_id = models.CharField(max_length=255)
 
+    @property
+    def shipping(self):
+        shipping = False
+        orderitems = self.items.all()
+        for i in orderitems:
+            if i.product.digital == False:
+                shipping= True
+            
+        return shipping
+
+    '''
+        self --> order (object in OrderItems)
+        items --> related name in order(object in OrderItems)-->orderitems
+
+        self.items.all() --> order.orderitems.all()
+    '''
     def get_cart_total(self):
         orderitems = self.items.all()
         total = 0

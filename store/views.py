@@ -1,38 +1,35 @@
+import datetime
+from itertools import product
 from django.shortcuts import render
-from .models import Order, OrderItem, Product
+from .models import Customer, Order, OrderItem, Product, Shipping
+from django.http import JsonResponse
+import json
+from .utils import cookieCart, cartData, guestOrder
 
 def store(request):
+
+    data = cartData(request)
+    cart_items = data['cart_items']
+
     products = Product.objects.all()
     context={
-        'products': products
+        'products': products,
+        'cart_items': cart_items
+
     }
     return render(request, 'store.html', context)
 
 def cart(request):
-    #this view dynamically renders the item stored in our cart
 
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        
-        #get the order if exist, created for this currently logged in user
-        #create if it does not exist
-        order, created = Order.objects.get_or_create(customer=customer, complete=False)
-        '''
-        gets all the orderitems whose parent is the order created by this specific customer
-        i.e gets all orderitems that falls under or that is a child of this order
-        A.K.A reverse lookup
-        '''
-
-        items = order.items.all()
-        print(items)
-
-    else:
-        items = []
-        order = {'get_cart_total':0, 'get_item_total':0}
+    data = cartData(request)
+    cart_items = data['cart_items']
+    items = data['items']
+    order = data['order']
 
     context={
         'items':items,
-        'order':order
+        'order':order,
+        'cart_items': cart_items
     }
     return render(request, 'cart.html', context)
 
@@ -41,19 +38,70 @@ def cart(request):
 
 def checkout(request):
 
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        
-        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+    data = cartData(request)
+    cart_items = data['cart_items']
+    items = data['items']
+    order = data['order']
 
-        items = order.items.all()
-
-    else:
-        items = []
-        order = {'get_cart_total':0, 'get_item_total':0}
 
     context={
         'items':items,
-        'order':order
+        'order':order,
+        'cart_items': cart_items,
     }
     return render(request, 'checkout.html', context)
+
+def updateItem(request):
+    data = json.loads(request.body)
+    productId = data['productId']
+    action = data['action']
+
+    customer = request.user.customer
+    product = Product.objects.get(id=productId)
+    order, created = Order.objects.get_or_create(customer=customer, complete=False)
+    orderitem, created = OrderItem.objects.get_or_create(order=order, product=product)
+
+    if action =='add':
+        orderitem.quantity = (orderitem.quantity + 1)
+    elif action == 'remove':
+        orderitem.quantity = (orderitem.quantity - 1)
+
+    orderitem.save()
+
+    if orderitem.quantity <= 0:
+        orderitem.delete()
+
+    return JsonResponse('Item was added', safe=False)
+
+def processOrder(request):
+    transaction_id = datetime.datetime.now().timestamp()
+    data = json.loads(request.body)
+    
+    if request.user.is_authenticated:
+        customer = request.user.customer
+        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+
+    else:
+        customer, order = guestOrder(request,data)
+    
+    total = data['form']['total']
+    order.transaction_id = transaction_id
+    
+    if total:
+        order.complete=True
+    order.save()
+
+    if order.shipping == True:
+        Shipping.objects.create(
+        customer = customer,
+        order = order,
+        address = data['shipping']['address'],
+        city = data['shipping']['city'],
+        state =data['shipping']['state'],
+        zipcode =data['shipping']['zipcode']
+    )
+
+
+
+
+    return JsonResponse('Payment was successful', safe=False)
