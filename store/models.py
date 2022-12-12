@@ -5,11 +5,10 @@ from django.contrib.auth.models import User
 
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
-    name = models.CharField(max_length=200)
     email = models.EmailField()
 
     def __str__(self):
-        return self.name
+        return self.email
 
 class Product(models.Model):
     name = models.CharField(max_length=200)

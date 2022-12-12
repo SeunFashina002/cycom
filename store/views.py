@@ -1,10 +1,57 @@
 import datetime
-from itertools import product
+from django.shortcuts import redirect, render
 from django.shortcuts import render
+from django.urls import reverse
+from store.form import RegisterForm
 from .models import Customer, Order, OrderItem, Product, Shipping
 from django.http import JsonResponse
 import json
 from .utils import cookieCart, cartData, guestOrder
+from django.contrib.auth.views import LoginView
+from django.views.generic import  CreateView
+from django.contrib.auth import login 
+from django.contrib.auth.decorators import login_required
+from .models import Customer
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+
+class Login(LoginView):
+    template_name = 'registration/login.html'
+
+def Signup(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+
+
+        if form.is_valid():
+            print('valid')
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password2 = form.cleaned_data['password2']
+            
+            user = User.objects.create_user(username, email, password2)
+            user.save()
+
+            created_user = authenticate(username=username, password=password2)
+            login(request, created_user)
+
+            user_model = User.objects.get(username=username)
+            
+            customer = Customer.objects.create(user=user_model, email=email)
+            customer.save()
+            
+            return redirect('/')
+
+        
+    else:
+        form = RegisterForm()
+    
+    context = {
+        'form' : form
+    }          
+
+    return render(request, 'registration/signup.html', context)
+
 
 def store(request):
 

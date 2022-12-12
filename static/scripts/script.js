@@ -31,7 +31,7 @@ function addCookieItem(productId, action) {
   }
   console.log(cart);
   document.cookie =
-    "cart=" + JSON.stringify(cart) + ";domain=;path=/;max-age=73737383939399";
+    "cart=" + JSON.stringify(cart) + ";domain=;path=/;max-age=7373912039109293810283747383939399";
   location.reload();
 }
 
