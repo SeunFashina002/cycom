@@ -1,1 +1,1 @@
-web: gunicorn cycom.wsgi
+web: gunicorn cycom.wsgi --log-file -
