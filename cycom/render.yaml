@@ -1,0 +1,20 @@
+databases:
+  - name: cycom
+    databaseName: cycom
+    user: cycom
+
+services:
+  - type: web
+    name: cycom
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn cycom.wsgi:application"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cycom
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
