@@ -2,11 +2,14 @@ databases:
   - name: cycom
     databaseName: cycom
     user: cycom_user
+    plan: free
 
 services:
   - type: web
     name: cycom
     env: python
+    plan: free
+    branch: main
     buildCommand: "./build.sh"
     startCommand: "gunicorn cycom.wsgi:application"
     envVars:
