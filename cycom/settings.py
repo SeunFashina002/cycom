@@ -165,6 +165,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/images/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
 
+SUPERUSER_NAME = os.environ.get("SUPERUSER_NAME")
+SUPERUSER_EMAIL = os.environ.get("SUPERUSER_EMAIL")
+SUPERUSER_PASSWORD = os.environ.get("SUPERUSER_PASSWORD")
+
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login'
